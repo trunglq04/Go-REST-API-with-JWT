@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
 	"example.com/rest-api/db"
@@ -124,4 +125,32 @@ func (e Event) Register(userId int64) error {
 	_, err = stmt.Exec(e.ID, userId)
 
 	return err
+}
+
+func (e Event) CancelRegistration(userId int64) error {
+	query := `
+		DELETE FROM registrations 
+		WHERE event_id = ? AND user_id = ?
+	`
+	stmt, err := db.DB.Prepare(query)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	result, err := stmt.Exec(e.ID, userId)
+    if err != nil {
+        return err
+    }
+
+    rowsAffected, err := result.RowsAffected()
+    if err != nil {
+        return err
+    }
+
+    if rowsAffected == 0 {
+        return fmt.Errorf("registration not found for event_id %d and user_id %d", e.ID, userId)
+    }
+
+    return nil
 }
