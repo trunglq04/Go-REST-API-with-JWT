@@ -12,6 +12,7 @@ func Authenticate(context *gin.Context)  {
 	token := context.Request.Header.Get("Authorization")
 
 	if token == "" {
+		// Response unauthorized and stop the server
 		context.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Not authorized."})
 		return
 	}
@@ -24,6 +25,7 @@ func Authenticate(context *gin.Context)  {
 		return
 	}
 
+	// Set userId to data context
 	context.Set("userId", userId)
 
 	context.Next()

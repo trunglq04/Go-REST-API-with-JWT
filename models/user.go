@@ -38,12 +38,17 @@ func (u User) Save() error {
 }
 
 func (u *User) ValidateCredentials() error {
-	query := "SELECT id, password FROM users WHERE email = ?"
+	query := `
+		SELECT id, password 
+		FROM users 
+		WHERE email = ?
+	`
 	row := db.DB.QueryRow(query, u.Email)
 
 	var retrievedPassword string
-	err := row.Scan(&u.ID, &retrievedPassword)	// set ID to user and retrievedPassword
-
+	// Bind ID for user and get the hashed password from the users table
+	err := row.Scan(&u.ID, &retrievedPassword)	
+	
 	if err != nil {
 		return err
 	}

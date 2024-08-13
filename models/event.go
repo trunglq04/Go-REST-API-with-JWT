@@ -23,11 +23,15 @@ func (e *Event) Save() error {
 		VALUES (?, ?, ?, ?, ?)
 	`
 	stmt, err := db.DB.Prepare(query) // for reuse purpose, more efficient
+
 	if err != nil {
 		return err
 	}
+
 	defer stmt.Close()
-	// use EXEC for changing data (insert, update, delete)
+
+	// use EXEC to assign value to `?` field and execute the query
+	// EXEC use for manipulate data in table methods (insert, update, delete)
 	result, err := stmt.Exec(e.Name, e.Description, e.Location, e.DateTime, e.UserID)
 	if err != nil {
 		return err
@@ -40,15 +44,18 @@ func (e *Event) Save() error {
 // a normal func
 func GetAllEvents() ([]Event, error) {
 	query := `SELECT * FROM events`
-	// use Query for getting data
+
+	// use QUERY to get data without data field assignment
 	rows, err := db.DB.Query(query)
+
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	// slice of events
+	// slice of events for get the data
 	var events []Event = []Event{}
+
 	for rows.Next() {
 		var event Event
 		err := rows.Scan(&event.ID, &event.Name, &event.Description, &event.Location, &event.DateTime, &event.UserID)
@@ -56,6 +63,7 @@ func GetAllEvents() ([]Event, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		events = append(events, event)
 	}
 
@@ -98,7 +106,10 @@ func (e Event) Update() error {
 }
 
 func (e Event) Delete() error {
-	query := `DELETE FROM events WHERE id = ?`
+	query := `
+		DELETE FROM events 
+		WHERE id = ?
+	`
 	stmt, err := db.DB.Prepare(query)
 
 	if err != nil {
@@ -120,6 +131,7 @@ func (e Event) Register(userId int64) error {
 	if err != nil {
 		return err
 	}
+
 	defer stmt.Close()
 
 	_, err = stmt.Exec(e.ID, userId)
@@ -133,24 +145,26 @@ func (e Event) CancelRegistration(userId int64) error {
 		WHERE event_id = ? AND user_id = ?
 	`
 	stmt, err := db.DB.Prepare(query)
+
 	if err != nil {
 		return err
 	}
+
 	defer stmt.Close()
 
 	result, err := stmt.Exec(e.ID, userId)
-    if err != nil {
-        return err
-    }
+	if err != nil {
+		return err
+	}
 
-    rowsAffected, err := result.RowsAffected()
-    if err != nil {
-        return err
-    }
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
 
-    if rowsAffected == 0 {
-        return fmt.Errorf("registration not found for event_id %d and user_id %d", e.ID, userId)
-    }
+	if rowsAffected == 0 {
+		return fmt.Errorf("registration not found for event_id: %d and user_id: %d", e.ID, userId)
+	}
 
-    return nil
+	return nil
 }
